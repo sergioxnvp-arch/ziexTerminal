@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIEX TERMINAL — AI Coding Environment</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-logo">Z</div>
+        <div class="welcome-title">ZIEX TERMINAL</div>
+        <div class="welcome-subtitle">
+            Next-generation AI-powered coding environment.<br>
+            Build, debug, and deploy with intelligent assistance.
+        </div>
+        <div class="welcome-actions">
+            <button class="welcome-btn welcome-btn-primary" onclick="enterApp()">
+                <i class="fas fa-rocket"></i> Launch Terminal
+            </button>
+            <button class="welcome-btn welcome-btn-secondary" onclick="enterApp()">
+                <i class="fas fa-folder-open"></i> Open Project
+            </button>
+        </div>
+        <div class="welcome-version">v2.0.1 — Build 2026.07.11</div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container hidden" id="appContainer">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <div class="logo" onclick="showWelcome()">
+                    <div class="logo-icon">Z</div>
+                    <span class="logo-text">ZIEX TERMINAL</span>
+                </div>
+                <div class="topbar-search">
+                    <input type="text" placeholder="Search files, commands, or ask AI... (Ctrl+P)" id="globalSearch">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="ai-status">
+                    <div class="ai-status-dot"></div>
+                    <span>AI Ready</span>
+                </div>
+                <div class="user-profile" onclick="showPanel('account')">
+                    <div class="user-avatar">D</div>
+                    <span class="user-name">Developer</span>
+                    <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--text-muted);"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Icon Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-item active" data-panel="explorer" onclick="showPanel('explorer')">
+                <i class="fas fa-folder-open"></i>
+                <span class="sidebar-tooltip">Explorer</span>
+            </div>
+            <div class="sidebar-item" data-panel="search" onclick="showPanel('search')">
+                <i class="fas fa-search"></i>
+                <span class="sidebar-tooltip">Search</span>
+            </div>
+            <div class="sidebar-item" data-panel="git" onclick="showPanel('git')">
+                <i class="fas fa-code-branch"></i>
+                <span class="sidebar-tooltip">Git</span>
+            </div>
+            <div class="sidebar-item" data-panel="debug" onclick="showPanel('debug')">
+                <i class="fas fa-bug"></i>
+                <span class="sidebar-tooltip">Debug</span>
+            </div>
+            <div class="sidebar-item" data-panel="extensions" onclick="showPanel('extensions')">
+                <i class="fas fa-puzzle-piece"></i>
+                <span class="sidebar-tooltip">Extensions</span>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-item" data-panel="database" onclick="showPanel('database')">
+                <i class="fas fa-database"></i>
+                <span class="sidebar-tooltip">Database</span>
+            </div>
+            <div class="sidebar-item" data-panel="packages" onclick="showPanel('packages')">
+                <i class="fas fa-cube"></i>
+                <span class="sidebar-tooltip">Packages</span>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-item" data-panel="ai" onclick="toggleRightPanel()">
+                <i class="fas fa-robot"></i>
+                <span class="sidebar-tooltip">AI Assistant</span>
+            </div>
+            <div class="sidebar-item" data-panel="preview" onclick="togglePreview()">
+                <i class="fas fa-play"></i>
+                <span class="sidebar-tooltip">Live Preview</span>
+            </div>
+            <div style="flex: 1;"></div>
+            <div class="sidebar-item" data-panel="settings" onclick="showPanel('settings')">
+                <i class="fas fa-cog"></i>
+                <span class="sidebar-tooltip">Settings</span>
+            </div>
+            <div class="sidebar-item" data-panel="account" onclick="showPanel('account')">
+                <i class="fas fa-user"></i>
+                <span class="sidebar-tooltip">Account</span>
+            </div>
+        </div>
+
+        <!-- Main Area -->
+        <div class="main-area" id="mainArea">
+            <!-- Explorer Panel -->
+            <div class="explorer-panel panel active" id="panel-explorer">
+                <div class="panel-header">
+                    <span>Explorer</span>
+                    <div class="panel-header-actions">
+                        <div class="panel-header-btn" onclick="newFile()" title="New File"><i class="fas fa-file-plus"></i></div>
+                        <div class="panel-header-btn" onclick="newFolder()" title="New Folder"><i class="fas fa-folder-plus"></i></div>
+                        <div class="panel-header-btn" onclick="refreshExplorer()" title="Refresh"><i class="fas fa-refresh"></i></div>
+                        <div class="panel-header-btn" onclick="collapseAll()" title="Collapse All"><i class="fas fa-compress"></i></div>
+                    </div>
+                </div>
+                <div class="file-tree" id="fileTree"></div>
+            </div>
+
+            <!-- Search Panel -->
+            <div class="explorer-panel panel" id="panel-search">
+                <div class="panel-header">
+                    <span>Search</span>
+                    <div class="panel-header-actions">
+                        <div class="panel-header-btn" onclick="clearSearch()"><i class="fas fa-trash"></i></div>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="form-group">
+                        <input type="text" class="form-input" placeholder="Search across files..." id="searchInput" onkeyup="performSearch(event)">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-input" placeholder="Replace with..." id="replaceInput">
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                        <button class="btn btn-primary btn-sm" onclick="performSearch()"><i class="fas fa-search"></i> Find</button>
+                        <button class="btn btn-secondary btn-sm" onclick="performReplace()"><i class="fas fa-exchange-alt"></i> Replace</button>
+                    </div>
+                    <div id="searchResults"></div>
+                </div>
+            </div>
+
+            <!-- Git Panel -->
+            <div class="explorer-panel panel" id="panel-git">
+                <div class="panel-header">
+                    <span>Source Control</span>
+                    <div class="panel-header-actions">
+                        <div class="panel-header-btn" onclick="refreshGit()"><i class="fas fa-refresh"></i></div>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="git-branch">
+                        <i class="fas fa-code-branch"></i>
+                        <span>On branch</span>
+                        <span class="git-branch-name" id="gitBranchName">main</span>
+                    </div>
+
+                    <div class="panel-section">
+                        <div class="panel-section-title"><i class="fas fa-edit"></i> Changes (3)</div>
+                        <div class="git-changes-list" id="gitChanges">
+                            <div class="git-change-item">
+                                <div class="git-change-status git-status-modified"></div>
+                                <span class="git-change-file">src/components/Header.tsx</span>
+                                <i class="fas fa-plus" style="color: var(--text-muted); cursor: pointer;"></i>
+                            </div>
+                            <div class="git-change-item">
+                                <div class="git-change-status git-status-added"></div>
+                                <span class="git-change-file">src/utils/api.ts</span>
+                                <i class="fas fa-plus" style="color: var(--text-muted); cursor: pointer;"></i>
+                            </div>
+                            <div class="git-change-item">
+                                <div class="git-change-status git-status-deleted"></div>
+                                <span class="git-change-file">old-config.json</span>
+                                <i class="fas fa-plus" style="color: var(--text-muted); cursor: pointer;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin: 12px 0;">
+                        <input type="text" class="form-input" placeholder="Commit message..." id="commitMsg" style="margin-bottom: 8px;">
+                        <button class="btn btn-primary" style="width: 100%;" onclick="gitCommit()">
+                            <i class="fas fa-check"></i> Commit
+                        </button>
+                    </div>
+
+                    <div class="panel-section">
+                        <div class="panel-section-title"><i class="fas fa-history"></i> Recent Commits</div>
+                        <div id="gitCommits">
+                            <div class="git-commit">
+                                <div class="git-commit-dot"></div>
+                                <div class="git-commit-info">
+                                    <div class="git-commit-msg">feat: add AI assistant panel</div>
+                                    <div class="git-commit-meta">Developer · 2 hours ago</div>
+                                </div>
+                                <span class="git-commit-hash">a1b2c3d</span>
+                            </div>
+                            <div class="git-commit">
+                                <div class="git-commit-dot" style="background: var(--accent-green);"></div>
+                                <div class="git-commit-info">
+                                    <div class="git-commit-msg">fix: terminal output rendering</div>
+                                    <div class="git-commit-meta">Developer · 5 hours ago</div>
+                                </div>
+                                <span class="git-commit-hash">e4f5g6h</span>
+                            </div>
+                            <div class="git-commit">
+                                <div class="git-commit-dot" style="background: var(--accent-yellow);"></div>
+                                <div class="git-commit-info">
+                                    <div class="git-commit-msg">chore: update dependencies</div>
+                                    <div class="git-commit-meta">Developer · 1 day ago</div>
+                                </div>
+                                <span class="git-commit-hash">i7j8k9l</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-top: 12px;">
+                        <button class="btn btn-secondary btn-sm" style="flex: 1;" onclick="gitPull()">
+                            <i class="fas fa-arrow-down"></i> Pull
+                        </button>
+                        <button class="btn btn-primary btn-sm" style="flex: 1;" onclick="gitPush()">
+                            <i class="fas fa-arrow-up"></i> Push
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debug Panel -->
+            <div class="explorer-panel panel" id="panel-debug">
+                <div class="panel-header"><span>Debug</span></div>
+                <div class="panel-content">
+                    <div class="empty-state">
+                        <i class="fas fa-bug"></i>
+                        <div class="empty-state-title">No Active Debug Session</div>
+                        <div class="empty-state-desc">Start debugging by selecting a configuration or pressing F5</div>
+                        <button class="btn btn-primary" style="margin-top: 8px;">
+                            <i class="fas fa-play"></i> Start Debugging
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Extensions Panel -->
+            <div class="explorer-panel panel" id="panel-extensions">
+                <div class="panel-header">
+                    <span>Extensions</span>
+                    <div class="panel-header-actions">
+                        <div class="panel-header-btn"><i class="fas fa-ellipsis-h"></i></div>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="form-group">
+                        <input type="text" class="form-input" placeholder="Search extensions in marketplace...">
+                    </div>
+                    <div class="panel-section">
+                        <div class="panel-section-title">Installed</div>
+                        <div class="pkg-list">
+                            <div class="pkg-item">
+                                <div class="pkg-info">
+                                    <span class="pkg-name"><i class="fas fa-paint-brush" style="color: var(--accent-cyan); margin-right: 6px;"></i>One Dark Pro</span>
+                                    <span class="pkg-version">v3.16.0</span>
+                                </div>
+                                <div class="pkg-actions">
+                                    <button class="btn btn-secondary btn-sm">Disable</button>
+                                </div>
+                            </div>
+                            <div class="pkg-item">
+                                <div class="pkg-info">
+                                    <span class="pkg-name"><i class="fas fa-code" style="color: var(--accent-green); margin-right: 6px;"></i>ESLint</span>
+                                    <span class="pkg-version">v2.4.4</span>
+                                </div>
+                                <div class="pkg-actions">
+                                    <button class="btn btn-secondary btn-sm">Disable</button>
+                                </div>
+                            </div>
+                            <div class="pkg-item">
+                                <div class="pkg-info">
+                                    <span class="pkg-name"><i class="fas fa-wind" style="color: var(--accent-blue); margin-right: 6px;"></i>Tailwind CSS IntelliSense</span>
+                                    <span class="pkg-version">v0.10.5</span>
+                                </div>
+                                <div class="pkg-actions">
+                                    <button class="btn btn-secondary btn-sm">Disable</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Database Panel -->
+            <div class="explorer-panel panel" id="panel-database">
+                <div class="panel-header"><span>Database</span></div>
+                <div class="panel-content">
+                    <div class="panel-section">
+                        <div class="panel-section-title"><i class="fas fa-plug"></i> Connection</div>
+                        <div class="db-connection-form">
+                            <select class="form-select" id="dbType">
+                                <option>PostgreSQL</option>
+                                <option>MySQL</option>
+                                <option>SQLite</option>
+                                <option>MongoDB</option>
+                            </select>
+                            <input type="text" class="form-input" placeholder="Host: localhost" value="localhost">
+                            <input type="text" class="form-input" placeholder="Database: ziex_db" value="ziex_db">
+                            <button class="btn btn-primary" onclick="connectDB()">
+                                <i class="fas fa-plug"></i> Connect
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-section" id="dbTablesSection" style="display: none;">
+                        <div class="panel-section-title"><i class="fas fa-table"></i> Tables</div>
+                        <div class="db-tables-list" id="dbTablesList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Packages Panel -->
+            <div class="explorer-panel panel" id="panel-packages">
+                <div class="panel-header">
+                    <span>Package Manager</span>
+                    <div class="panel-header-actions">
+                        <div class="panel-header-btn" onclick="showModal('installPackage')"><i class="fas fa-plus"></i></div>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="panel-section">
+                        <div class="panel-section-title">Dependencies</div>
+                        <div class="pkg-list" id="pkgDependencies"></div>
+                    </div>
+                    <div class="panel-section">
+                        <div class="panel-section-title">Dev Dependencies</div>
+                        <div class="pkg-list" id="pkgDevDependencies"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Panel -->
+            <div class="explorer-panel panel" id="panel-settings">
+                <div class="panel-header"><span>Settings</span></div>
+                <div class="panel-content">
+                    <div class="settings-group">
+                        <div class="settings-group-title"><i class="fas fa-palette"></i> Appearance</div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-label">Dark Mode</div>
+                                <div class="settings-desc">Use dark theme throughout the app</div>
+                            </div>
+                            <div class="toggle active" onclick="toggleSetting(this)"><div class="toggle-knob"></div></div>
+                        </div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-label">Font Size</div>
+                                <div class="settings-desc">Editor font size in pixels</div>
+                            </div>
+                            <select class="form-select" style="width: 80px;" onchange="changeFontSize(this.value)">
+                                <option>12</option>
+                                <option selected>14</option>
+                                <option>16</option>
+                                <option>18</option>
+                                <option>20</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-label">Font Family</div>
+                                <div class="settings-desc">Editor monospace font</div>
+                            </div>
+                            <select class="form-select" style="width: 140px;">
+                                <option selected>JetBrains Mono</option>
+                                <option>Fira Code</option>
+                                <option>Consolas</option>
+                                <option>Source Code Pro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <div class="settings-group-title"><i class="fas fa-keyboard"></i> Editor</div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-label">Auto Save</div>
+                                <div class="settings-desc">Automatically save files</div>
+                            </div>
+                            <div class="toggle active" onclick="toggleSetting(this)"><div class="toggle-knob"></div></div>
+                        </div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-label">Format On Save</div>
+                                <div class="settings-desc">Format code when saving</div>
+                            </div>
+                            <div class="toggle active" onclick="toggleSetting(this)"><div class="toggle-knob"></div></div>
+                        </div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-label">Word Wrap</div>
+                                <div class="settings-desc">Wrap lines at viewport width</div>
+                            </div>
+                            <div class="toggle" onclick="toggleSetting(this)"><div class="toggle-knob"></div></div>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <div class="settings-group-title"><i class="fas fa-robot"></i> AI Assistant</div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-label">AI Model</div>
+                                <div class="settings-desc">Select AI model for assistance</div>
+                            </div>
+                            <select class="form-select" style="width: 140px;">
+                                <option selected>GPT-4o</option>
+                                <option>Claude 3.5</option>
+                                <option>Gemini Pro</option>
+                                <option>Llama 3</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-label">Auto Suggestions</div>
+                                <div class="settings-desc">Show inline code suggestions</div>
+                            </div>
+                            <div class="toggle active" onclick="toggleSetting(this)"><div class="toggle-knob"></div></div>
+                        </div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-label">API Key</div>
+                                <div class="settings-desc">Your AI provider API key</div>
+                            </div>
+                            <input type="password" class="form-input" style="width: 140px;" placeholder="sk-..." value="sk-ziex-********">
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <div class="settings-group-title"><i class="fas fa-terminal"></i> Terminal</div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-label">Default Shell</div>
+                                <div class="settings-desc">Shell for new terminals</div>
+                            </div>
+                            <select class="form-select" style="width: 100px;">
+                                <option selected>Bash</option>
+                                <option>Zsh</option>
+                                <option>PowerShell</option>
+                                <option>CMD</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-label">Cursor Style</div>
+                                <div class="settings-desc">Terminal cursor appearance</div>
+                            </div>
+                            <select class="form-select" style="width: 100px;">
+                                <option selected>Block</option>
+                                <option>Line</option>
+                                <option>Bar</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Panel -->
+            <div class="explorer-panel panel" id="panel-account">
+                <div class="panel-header"><span>Account</span></div>
+                <div class="panel-content">
+                    <div class="account-header">
+                        <div class="account-avatar-large">D</div>
+                        <div class="account-info">
+                            <h4>Developer</h4>
+                            <p>dev@ziex.io · Pro Plan</p>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">24</div>
+                            <div class="stat-label">Projects</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">1.2k</div>
+                            <div class="stat-label">Files</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">8.5k</div>
+                            <div class="stat-label">AI Requests</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">99%</div>
+                            <div class="stat-label">Uptime</div>
+                        </div>
+                    </div>
+                    <div class="panel-section">
+                        <div class="panel-section-title">Recent Projects</div>
+                        <div class="db-tables-list">
+                            <div class="db-table-item"><i class="fas fa-folder"></i> e-commerce-app</div>
+                            <div class="db-table-item"><i class="fas fa-folder"></i> ai-chatbot</div>
+                            <div class="db-table-item"><i class="fas fa-folder"></i> dashboard-analytics</div>
+                            <div class="db-table-item"><i class="fas fa-folder"></i> portfolio-site</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 16px;">
+                        <button class="btn btn-secondary" style="flex: 1;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                        <button class="btn btn-primary" style="flex: 1;"><i class="fas fa-crown"></i> Upgrade</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workspace -->
+            <div class="workspace">
+                <div class="tab-bar" id="tabBar"></div>
+                <div class="breadcrumbs" id="breadcrumbs">
+                    <span class="breadcrumb-item">ziex-project</span>
+                    <span class="breadcrumb-sep"><i class="fas fa-chevron-right"></i></span>
+                    <span class="breadcrumb-item">src</span>
+                </div>
+                <div class="editor-container" id="editorContainer">
+                    <div class="editor-placeholder" id="editorPlaceholder">
+                        <i class="fas fa-code"></i>
+                        <div class="editor-placeholder-text">
+                            <strong>Welcome to ZIEX TERMINAL</strong><br>
+                            Select a file from the explorer to start editing
+                        </div>
+                        <div class="editor-placeholder-shortcuts">
+                            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>P</kbd> Quick Open</div>
+                            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>N</kbd> New File</div>
+                            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>`</kbd> Terminal</div>
+                        </div>
+                    </div>
+                    <div id="monaco-editor" style="display: none;"></div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-bar-left">
+                        <div class="status-item" id="statusBranch"><i class="fas fa-code-branch"></i> main</div>
+                        <div class="status-item" id="statusErrors"><i class="fas fa-times-circle"></i> 0 Errors</div>
+                        <div class="status-item" id="statusWarnings"><i class="fas fa-exclamation-triangle"></i> 0 Warnings</div>
+                    </div>
+                    <div class="status-bar-right">
+                        <div class="status-item" id="statusLang">Plain Text</div>
+                        <div class="status-item" id="statusEncoding">UTF-8</div>
+                        <div class="status-item" id="statusLineCol">Ln 1, Col 1</div>
+                        <div class="status-item" id="statusSpaces">Spaces: 2</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel (AI) -->
+            <div class="right-panel" id="rightPanel">
+                <div class="ai-header">
+                    <div class="ai-title">
+                        <i class="fas fa-robot"></i>
+                        <span>AI Assistant</span>
+                    </div>
+                    <div class="ai-actions">
+                        <div class="ai-action-btn" onclick="clearChat()" title="Clear Chat"><i class="fas fa-trash"></i></div>
+                        <div class="ai-action-btn" onclick="toggleRightPanel()" title="Close"><i class="fas fa-times"></i></div>
+                    </div>
+                </div>
+                <div class="ai-chat" id="aiChat">
+                    <div class="ai-message">
+                        <div class="ai-avatar assistant">AI</div>
+                        <div class="ai-bubble assistant">
+                            Hello! I am your ZIEX AI coding assistant. I can help you write, debug, and refactor code. What would you like to work on today?
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-suggestions" id="aiSuggestions">
+                    <div class="ai-suggestion-chip" onclick="sendQuickMessage('Explain this code')">Explain this code</div>
+                    <div class="ai-suggestion-chip" onclick="sendQuickMessage('Refactor selection')">Refactor selection</div>
+                    <div class="ai-suggestion-chip" onclick="sendQuickMessage('Generate tests')">Generate tests</div>
+                    <div class="ai-suggestion-chip" onclick="sendQuickMessage('Fix bugs')">Fix bugs</div>
+                </div>
+                <div class="ai-input-area">
+                    <div class="ai-input-wrapper">
+                        <textarea class="ai-input" id="aiInput" placeholder="Ask AI to code, explain, debug... (Shift+Enter to send)" rows="1" onkeydown="handleAIInput(event)"></textarea>
+                        <button class="ai-send-btn" id="aiSendBtn" onclick="sendAIMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal Panel -->
+            <div class="terminal-panel" id="terminalPanel">
+                <div class="terminal-tabs">
+                    <div class="terminal-tab active" onclick="switchTerminal(0)">
+                        <i class="fas fa-terminal"></i> Terminal
+                    </div>
+                    <div class="terminal-tab" onclick="switchTerminal(1)">
+                        <i class="fas fa-list"></i> Logs
+                    </div>
+                    <div class="terminal-tab" onclick="switchTerminal(2)">
+                        <i class="fas fa-exclamation-circle"></i> Problems
+                    </div>
+                    <div class="terminal-tab" onclick="switchTerminal(3)">
+                        <i class="fas fa-play"></i> Output
+                    </div>
+                    <div style="flex: 1;"></div>
+                    <div class="terminal-tab" onclick="addTerminal()">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                </div>
+                <div class="terminal-body" id="terminalBody">
+                    <div id="terminalContent"></div>
+                    <div class="terminal-input-line">
+                        <span class="terminal-prompt">➜ ~/ziex-project</span>
+                        <input type="text" class="terminal-input" id="terminalInput" onkeydown="handleTerminalInput(event)" autofocus>
+                    </div>
+                </div>
+                <div class="terminal-toolbar">
+                    <div class="terminal-toolbar-left">
+                        <span><i class="fas fa-circle" style="color: var(--accent-green); font-size: 8px;"></i> bash</span>
+                        <span id="terminalStatus">Ready</span>
+                    </div>
+                    <div class="terminal-toolbar-right">
+                        <button class="terminal-tool-btn" onclick="clearTerminal()"><i class="fas fa-eraser"></i> Clear</button>
+                        <button class="terminal-tool-btn" onclick="copyTerminal()"><i class="fas fa-copy"></i> Copy</button>
+                        <button class="terminal-tool-btn" onclick="killTerminal()"><i class="fas fa-times"></i> Kill</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Panel Overlay -->
+    <div class="preview-panel" id="previewPanel">
+        <div class="preview-toolbar">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-globe" style="color: var(--accent-cyan);"></i>
+                <span style="font-size: 13px; font-weight: 500;">Live Preview</span>
+                <span style="font-size: 11px; color: var(--text-muted);">http://localhost:3000</span>
+            </div>
+            <div class="preview-devices">
+                <div class="preview-device-btn active" onclick="setPreviewDevice('desktop')" title="Desktop"><i class="fas fa-desktop"></i></div>
+                <div class="preview-device-btn" onclick="setPreviewDevice('tablet')" title="Tablet"><i class="fas fa-tablet-alt"></i></div>
+                <div class="preview-device-btn" onclick="setPreviewDevice('mobile')" title="Mobile"><i class="fas fa-mobile-alt"></i></div>
+                <div class="preview-device-btn" onclick="refreshPreview()" title="Refresh"><i class="fas fa-refresh"></i></div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary btn-sm" onclick="openInBrowser()"><i class="fas fa-external-link-alt"></i> Open</button>
+                <button class="btn btn-secondary btn-sm" onclick="togglePreview()"><i class="fas fa-times"></i> Close</button>
+            </div>
+        </div>
+        <div class="preview-frame-container">
+            <div class="preview-frame-wrapper desktop" id="previewFrameWrapper">
+                <iframe class="preview-frame" id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="contextAction('open')"><i class="fas fa-folder-open"></i> Open</div>
+        <div class="context-menu-item" onclick="contextAction('rename')"><i class="fas fa-edit"></i> Rename</div>
+        <div class="context-menu-item" onclick="contextAction('duplicate')"><i class="fas fa-copy"></i> Duplicate</div>
+        <div class="context-menu-sep"></div>
+        <div class="context-menu-item" onclick="contextAction('copyPath')"><i class="fas fa-link"></i> Copy Path</div>
+        <div class="context-menu-item" onclick="contextAction('delete')"><i class="fas fa-trash"></i> Delete</div>
+    </div>
+
+    <!-- Modal: New File -->
+    <div class="modal-overlay" id="modal-newFile">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">New File</span>
+                <div class="modal-close" onclick="closeModal('newFile')"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">File Name</label>
+                    <input type="text" class="form-input" id="newFileName" placeholder="e.g., component.tsx" onkeydown="if(event.key==='Enter') confirmNewFile()">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('newFile')">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmNewFile()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: New Folder -->
+    <div class="modal-overlay" id="modal-newFolder">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">New Folder</span>
+                <div class="modal-close" onclick="closeModal('newFolder')"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Folder Name</label>
+                    <input type="text" class="form-input" id="newFolderName" placeholder="e.g., components" onkeydown="if(event.key==='Enter') confirmNewFolder()">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('newFolder')">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmNewFolder()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Install Package -->
+    <div class="modal-overlay" id="modal-installPackage">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Install Package</span>
+                <div class="modal-close" onclick="closeModal('installPackage')"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Package Name</label>
+                    <input type="text" class="form-input" id="installPkgName" placeholder="e.g., lodash" onkeydown="if(event.key==='Enter') confirmInstallPackage()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Package Manager</label>
+                    <select class="form-select" id="installPkgManager">
+                        <option>npm</option>
+                        <option>yarn</option>
+                        <option>pnpm</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Version (optional)</label>
+                    <input type="text" class="form-input" placeholder="e.g., ^1.0.0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('installPackage')">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmInstallPackage()">Install</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: AI Project Builder -->
+    <div class="modal-overlay" id="modal-projectBuilder">
+        <div class="modal" style="width: 560px;">
+            <div class="modal-header">
+                <span class="modal-title"><i class="fas fa-magic" style="color: var(--accent-purple); margin-right: 8px;"></i>AI Project Builder</span>
+                <div class="modal-close" onclick="closeModal('projectBuilder')"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                    Describe the project you want to build. AI will generate the folder structure, files, and code.
+                </p>
+                <textarea class="project-builder-input" id="projectBuilderInput" placeholder="e.g., Buatkan website toko online dengan React, Tailwind CSS, dan fitur keranjang belanja..."></textarea>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <span style="font-size: 11px; color: var(--text-muted);">Quick templates:</span>
+                    <span class="ai-suggestion-chip" onclick="setProjectTemplate('ecommerce')">E-Commerce</span>
+                    <span class="ai-suggestion-chip" onclick="setProjectTemplate('blog')">Blog</span>
+                    <span class="ai-suggestion-chip" onclick="setProjectTemplate('dashboard')">Dashboard</span>
+                    <span class="ai-suggestion-chip" onclick="setProjectTemplate('api')">REST API</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('projectBuilder')">Cancel</button>
+                <button class="btn btn-primary" onclick="buildProject()">
+                    <i class="fas fa-magic"></i> Build Project
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
